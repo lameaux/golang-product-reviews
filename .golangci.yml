@@ -1,0 +1,45 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+output:
+  formats:
+    text:
+      path: stdout
+      colors: true
+      print-issued-lines: true
+      print-linter-name: true
+
+linters:
+  default: none
+  enable:
+    - gocritic     # Provides diagnostics that check for bugs, performance and style issues.
+    - prealloc     # Finds slice declarations that could potentially be pre-allocated
+    - gosec        # Inspects source code for security problems.
+    - bodyclose    # Checks whether HTTP response body is closed successfully.
+    - unconvert    # Remove unnecessary type conversions.
+    - nolintlint   # Reports ill-formed or insufficient nolint directives.
+    - rowserrcheck # Checks whether Rows.Err of rows is checked successfully.
+    - misspell     # Finds commonly misspelled English words.
+    - sloglint     # Ensure consistent code style when using log/slog.
+    - nilerr       # Finds the code that returns nil even if it checks that the error is not nil.
+    - revive       # Drop-in replacement of golint.
+  exclusions:
+    paths:
+      - vendor
+  settings:
+    misspell:
+      locale: US
+    revive:
+      severity: warning
+      rules:
+        - name: package-comments
+          disabled: true
+
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    paths:
+      - vendor
