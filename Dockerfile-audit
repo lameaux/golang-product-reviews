@@ -1,0 +1,11 @@
+FROM golang:1.25-alpine3.22 AS builder
+
+COPY . /usr/local/main/
+WORKDIR /usr/local/main/
+
+RUN CGO_ENABLED=0 go build -o /bin/main ./cmd/audit/
+
+FROM alpine:3.22 AS runner
+
+COPY --from=builder /bin/main /bin/main
+ENTRYPOINT ["/bin/main"]

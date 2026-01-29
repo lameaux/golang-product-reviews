@@ -1,0 +1,45 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile-api
+    image: api:latest
+    environment:
+      POSTGRES_URL: postgres://myuser:mypassword@postgres:5432/mydb?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      NATS_URL: nats://nats:4222
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  audit:
+    build:
+      context: .
+      dockerfile: Dockerfile-audit
+    image: audit:latest
+    environment:
+      NATS_URL: nats://nats:4222
+    restart: unless-stopped
+
+  nats:
+    image: nats:latest
+    container_name: nats
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -28,3 +28,11 @@ test:
 
 clean:
 	rm -rf $(BUILD_DIR)
+
+docker-build: docker-build-api docker-build-audit
+
+docker-build-api:
+	docker build -f Dockerfile-api -t api:latest .
+
+docker-build-audit:
+	docker build -f Dockerfile-audit -t audit:latest .
