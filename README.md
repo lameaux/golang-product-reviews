@@ -33,3 +33,8 @@ make build-docker
 ```shell
 docker compose up
 ```
+
+# Design consideration
+
+In order to expose a REST API we need to implement an HTTP server. 
+I am using Gorilla Mux for request routing.
