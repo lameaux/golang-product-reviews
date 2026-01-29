@@ -38,3 +38,8 @@ docker compose up
 
 In order to expose a REST API we need to implement an HTTP server. 
 I am using Gorilla Mux for request routing.
+
+Products and reviews are stored in Postgres database.
+Database migrations will be applied on application start.
+Gorm is used for mapping relational data into structs. 
+

@@ -4,22 +4,31 @@ services:
       context: .
       dockerfile: Dockerfile-api
     image: api:latest
+    container_name: api
     environment:
       POSTGRES_URL: postgres://myuser:mypassword@postgres:5432/mydb?sslmode=disable
       REDIS_URL: redis://redis:6379
       NATS_URL: nats://nats:4222
+      RUN_MIGRATIONS: true
     ports:
       - "8080:8080"
     restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - nats
 
   audit:
     build:
       context: .
       dockerfile: Dockerfile-audit
     image: audit:latest
+    container_name: audit
     environment:
       NATS_URL: nats://nats:4222
     restart: unless-stopped
+    depends_on:
+      - nats
 
   nats:
     image: nats:latest
@@ -32,13 +41,14 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgres:15
+    image: postgres:18
+    container_name: postgres
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: mydb
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     restart: unless-stopped
 
 volumes:
