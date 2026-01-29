@@ -39,3 +39,6 @@ docker-build-api:
 
 docker-build-audit:
 	docker build -f Dockerfile-audit -t audit:latest .
+
+compose:
+	docker compose up

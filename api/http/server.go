@@ -2,13 +2,21 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/lameaux/golang-product-reviews/model"
 	"github.com/lameaux/golang-product-reviews/productmanager"
 	"github.com/rs/zerolog"
+)
+
+var (
+	validate = validator.New(validator.WithRequiredStructEnabled())
 )
 
 type Server struct {
@@ -51,7 +59,14 @@ func (s *Server) Serve() error {
 
 func (s *Server) CreateRouter() *mux.Router {
 	r := mux.NewRouter()
+	r.Use(s.loggingMiddleware)
 	r.HandleFunc("/health", s.handleHealth()).Methods("GET")
+
+	products := r.PathPrefix("/products").Subrouter()
+	s.setupProductsRouter(products)
+
+	reviews := products.PathPrefix("/{product_id}/reviews").Subrouter()
+	s.setupReviewsRouter(reviews)
 
 	return r
 }
@@ -63,4 +78,45 @@ func (s *Server) Stop() {
 	if err := s.srv.Shutdown(ctx); err != nil {
 		s.logger.Error().Err(err).Msg("HTTP server shutdown error")
 	}
+}
+
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.logger.Info().Str("method", r.Method).Msg(r.RequestURI)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) sendAsJSON(w http.ResponseWriter, response interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		s.logger.Error().Err(err).Msg("encode response failed")
+	}
+}
+
+func getProductID(r *http.Request) (model.ID, error) {
+	productID, err := strconv.Atoi(mux.Vars(r)["product_id"])
+	if err != nil {
+		return 0, err
+	}
+
+	return productID, nil
+}
+
+func getReviewID(r *http.Request) (model.ID, error) {
+	reviewID, err := strconv.Atoi(mux.Vars(r)["review_id"])
+	if err != nil {
+		return 0, err
+	}
+
+	return reviewID, nil
+}
+
+func getIntQuery(r *http.Request, key string, def int) (int, error) {
+	val := r.URL.Query().Get(key)
+	if val == "" {
+		return def, nil
+	}
+	return strconv.Atoi(val)
 }

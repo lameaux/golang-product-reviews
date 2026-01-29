@@ -1,0 +1,30 @@
+### List product reviews
+GET http://localhost:8080/products/1/reviews?offset=0&limit=100
+
+### Create new review
+POST http://localhost:8080/products/1/reviews
+Content-Type: application/json
+
+{
+  "first_name": "Sergej",
+  "last_name": "Sizov",
+  "review": "Very good product",
+  "rating": 5
+}
+
+### Update existing review
+PUT http://localhost:8080/products/1/reviews/1
+Content-Type: application/json
+
+{
+  "first_name": "Donald",
+  "last_name": "Duck",
+  "review": "Product is not that good",
+  "rating": 1
+}
+
+### Get product review by ID
+GET http://localhost:8080/products/1/reviews/1
+
+### Delete product review by ID
+DELETE http://localhost:8080/products/1/reviews/1

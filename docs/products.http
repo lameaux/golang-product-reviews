@@ -1,0 +1,31 @@
+### Health
+GET http://localhost:8080/health
+
+### List products
+GET http://localhost:8080/products?offset=0&limit=100
+
+### Create new product
+POST http://localhost:8080/products
+Content-Type: application/json
+
+{
+  "name": "Product 1",
+  "description": "Description of Product 1",
+  "price": 100
+}
+
+### Update existing product
+PUT http://localhost:8080/products/1
+Content-Type: application/json
+
+{
+"name": "Product 1 updated",
+"description": "Description of Product 1 updated",
+"price": 101
+}
+
+### Get product by ID
+GET http://localhost:8080/products/1
+
+### Delete product by ID
+DELETE http://localhost:8080/products/1
