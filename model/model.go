@@ -1,7 +1,7 @@
 package model
 
 type (
-	ID           = uint32
-	Rating       = uint8
-	PriceInCents = uint32
+	ID           = int
+	Rating       = int
+	PriceInCents = int
 )
