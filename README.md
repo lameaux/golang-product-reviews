@@ -14,8 +14,22 @@ Infra:
 
 The whole environment is deployed using **Docker Compose**.
 
-# How to build
+# Buiding and running
+
+### Building locally
 
 ```shell
 make
+```
+
+### Building with Docker
+
+```shell
+make build-docker
+```
+
+### Running with Docker Compose
+
+```shell
+docker compose up
 ```
