@@ -1,11 +1,12 @@
 FROM golang:1.25-alpine3.22 AS builder
 
-COPY . /usr/local/main/
-WORKDIR /usr/local/main/
+COPY . /app
+WORKDIR /app
 
-RUN CGO_ENABLED=0 go build -o /bin/main ./cmd/api/
+RUN CGO_ENABLED=0 go build -mod vendor -o /bin/main ./cmd/api/
 
 FROM alpine:3.22 AS runner
 
 COPY --from=builder /bin/main /bin/main
+COPY --from=builder /app/migrations /migrations
 ENTRYPOINT ["/bin/main"]

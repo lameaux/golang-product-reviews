@@ -29,7 +29,10 @@ test:
 clean:
 	rm -rf $(BUILD_DIR)
 
-docker-build: docker-build-api docker-build-audit
+vendor:
+	go mod vendor
+
+docker-build: vendor docker-build-api docker-build-audit
 
 docker-build-api:
 	docker build -f Dockerfile-api -t api:latest .
