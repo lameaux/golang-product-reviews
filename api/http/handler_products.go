@@ -21,17 +21,22 @@ func (s *Server) handleListProducts() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		offset, err := getIntQuery(r, "offset", 0)
 		if err != nil {
-			http.Error(w, "invalid offset", http.StatusBadRequest)
+			http.Error(w, "handleListProducts - invalid offset", http.StatusBadRequest)
 			return
 		}
 
 		limit, err := getIntQuery(r, "limit", 100)
 		if err != nil {
-			http.Error(w, "invalid limit", http.StatusBadRequest)
+			http.Error(w, "handleListProducts - invalid limit", http.StatusBadRequest)
 			return
 		}
 
-		products := s.manager.ListProducts(offset, limit)
+		products, err := s.manager.ListProducts(r.Context(), offset, limit)
+		if err != nil {
+			http.Error(w, "handleListProducts - ListProducts: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		s.sendAsJSON(w, products)
 	}
 }
@@ -40,11 +45,16 @@ func (s *Server) handleGetProduct() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		productID, err := getProductID(r)
 		if err != nil {
-			http.Error(w, "handleDeleteProduct - getProductID: "+err.Error(), http.StatusBadRequest)
+			http.Error(w, "handleGetProduct - getProductID: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		product := s.manager.GetProduct(productID)
+		product, err := s.manager.GetProduct(r.Context(), productID)
+		if err != nil {
+			http.Error(w, "handleGetProduct - GetProduct: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		if product == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -70,7 +80,7 @@ func (s *Server) handlePostProduct() http.HandlerFunc {
 			return
 		}
 
-		productID, err := s.manager.CreateProduct(&product)
+		productID, err := s.manager.CreateProduct(r.Context(), &product)
 		if err != nil {
 			http.Error(w, "handlePostProduct - CreateProduct: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -104,7 +114,7 @@ func (s *Server) handlePutProduct() http.HandlerFunc {
 			return
 		}
 
-		if err := s.manager.UpdateProduct(productID, &product); err != nil {
+		if err := s.manager.UpdateProduct(r.Context(), productID, &product); err != nil {
 			http.Error(w, "handlePutProduct - manager: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -121,7 +131,7 @@ func (s *Server) handleDeleteProduct() http.HandlerFunc {
 			return
 		}
 
-		if err := s.manager.DeleteProduct(productID); err != nil {
+		if err := s.manager.DeleteProduct(r.Context(), productID); err != nil {
 			http.Error(w, "handleDeleteProduct - manager: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
