@@ -24,14 +24,14 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, logger); err != nil {
+	if err := run(ctx, &logger); err != nil {
 		logger.Error().Err(err).Msg("start failed")
 	}
 
 	logger.Info().Msg("api stopped")
 }
 
-func run(ctx context.Context, logger zerolog.Logger) error {
+func run(ctx context.Context, logger *zerolog.Logger) error {
 	dao, err := setupDatabase()
 	if err != nil {
 		return fmt.Errorf("setupDatabase: %w", err)
