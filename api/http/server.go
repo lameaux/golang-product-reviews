@@ -22,14 +22,14 @@ var (
 type Server struct {
 	srv     *http.Server
 	port    int
-	logger  zerolog.Logger
-	manager *productmanager.Manager
+	logger  *zerolog.Logger
+	manager productmanager.Manager
 }
 
 func New(
 	port int,
-	logger zerolog.Logger,
-	manager *productmanager.Manager,
+	logger *zerolog.Logger,
+	manager productmanager.Manager,
 ) *Server {
 	return &Server{
 		port:    port,
