@@ -5,5 +5,4 @@ type Product struct {
 	Name        string
 	Description string
 	Price       PriceInCents
-	ReviewIDs   []ID
 }

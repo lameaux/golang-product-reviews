@@ -22,13 +22,13 @@ func TestHandleListReviews(t *testing.T) {
 			name:       "invalid offset",
 			offset:     "invalid",
 			wantStatus: http.StatusBadRequest,
-			wantBody:   "invalid offset",
+			wantBody:   "handleListReviews - invalid offset",
 		},
 		{
 			name:       "invalid limit",
 			limit:      "invalid",
 			wantStatus: http.StatusBadRequest,
-			wantBody:   "invalid limit",
+			wantBody:   "handleListReviews - invalid limit",
 		},
 		{
 			name:       "valid response",

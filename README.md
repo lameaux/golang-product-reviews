@@ -1,5 +1,6 @@
-# golang-product-reviews
-Golang Product Reviews
+# Golang Product Reviews
+
+Sergej Sizov
 
 # Components
 
@@ -34,12 +35,26 @@ make build-docker
 docker compose up
 ```
 
+# Examples
+
+Check `docs` for request examples.
+
 # Design consideration
+
+The application is dockerized, we can easily run it in Docker Compose.
+
+There are 2 services: api server and audit logger.
 
 In order to expose a REST API we need to implement an HTTP server. 
 I am using Gorilla Mux for request routing.
 
+HTTP handlers and service layer are covered with unit tests.
+
 Products and reviews are stored in Postgres database.
-Database migrations will be applied on application start.
+Database migrations are applied on application start.
 Gorm is used for mapping relational data into structs. 
+
+Caching is implemented using Redis.
+Messaging is implemented using NATS.
+
 
