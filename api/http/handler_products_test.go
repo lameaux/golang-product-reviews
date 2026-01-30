@@ -22,18 +22,18 @@ func TestHandleListProducts(t *testing.T) {
 			name:       "invalid offset",
 			offset:     "invalid",
 			wantStatus: http.StatusBadRequest,
-			wantBody:   "invalid offset",
+			wantBody:   "handleListProducts - invalid offset",
 		},
 		{
 			name:       "invalid limit",
 			limit:      "invalid",
 			wantStatus: http.StatusBadRequest,
-			wantBody:   "invalid limit",
+			wantBody:   "handleListProducts - invalid limit",
 		},
 		{
 			name:       "valid response",
 			wantStatus: http.StatusOK,
-			wantBody:   `[{"id":1,"name":"P1","description":"P1 desc","price":100,"average_rating":1}]`,
+			wantBody:   `[{"id":1,"name":"P1","description":"P1 desc","price":100,"rating":1}]`,
 		},
 	}
 
@@ -65,7 +65,7 @@ func TestHandleGetProduct(t *testing.T) {
 			name:       "valid id",
 			id:         1,
 			wantStatus: http.StatusOK,
-			wantBody:   `{"id":1,"name":"P1","description":"P1 desc","price":100,"average_rating":1}`,
+			wantBody:   `{"id":1,"name":"P1","description":"P1 desc","price":100,"rating":1}`,
 		},
 	}
 

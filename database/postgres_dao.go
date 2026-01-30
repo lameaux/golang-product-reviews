@@ -28,6 +28,7 @@ func (d *postgresDAO) UpdateProduct(ctx context.Context, p *model.Product) error
 }
 
 func (d *postgresDAO) DeleteProduct(ctx context.Context, id model.ID) error {
+	// TODO delete all reviews
 	return nil
 }
 
@@ -40,5 +41,25 @@ func (d *postgresDAO) GetProductRating(ctx context.Context, id model.ID) (float3
 }
 
 func (d *postgresDAO) ListProducts(ctx context.Context, offset int, limit int) ([]*model.Product, error) {
+	return nil, nil
+}
+
+func (d *postgresDAO) CreateProductReview(ctx context.Context, review *model.Review) (model.ID, error) {
+	return 0, nil
+}
+
+func (d *postgresDAO) UpdateProductReview(ctx context.Context, review *model.Review) error {
+	return nil
+}
+
+func (d *postgresDAO) DeleteProductReview(ctx context.Context, productID model.ID, reviewID model.ID) error {
+	return nil
+}
+
+func (d *postgresDAO) GetProductReview(ctx context.Context, productID model.ID, reviewID model.ID) (*model.Review, error) {
+	return nil, nil
+}
+
+func (d *postgresDAO) ListProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*model.Review, error) {
 	return nil, nil
 }

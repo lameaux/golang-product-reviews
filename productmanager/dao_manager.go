@@ -71,6 +71,10 @@ func (m *DAOManager) GetProduct(ctx context.Context, productID model.ID) (*dto.P
 		return nil, fmt.Errorf("dao.GetProduct: %w", err)
 	}
 
+	if product == nil {
+		return nil, nil
+	}
+
 	rating, err := m.getProductRating(ctx, product.ID)
 	if err != nil {
 		return nil, fmt.Errorf("getProductRating: %w", err)
@@ -125,25 +129,96 @@ func (m *DAOManager) getProductRating(ctx context.Context, id model.ID) (float32
 }
 
 func (m *DAOManager) CreateProductReview(ctx context.Context, productID model.ID, r *dto.Review) (model.ID, error) {
-	reviewID := 0
+	review := &model.Review{
+		ProductID: productID,
+		FirstName: r.FirstName,
+		LastName:  r.LastName,
+		Review:    r.Review,
+		Rating:    r.Rating,
+	}
+
+	reviewID, err := m.dao.CreateProductReview(ctx, review)
+	if err != nil {
+		return 0, fmt.Errorf("dao.CreateProductReview: %w", err)
+	}
+
+	// TODO: save to cache
+
 	m.notifyFunc(ctx, productID, reviewID, "create")
-	return 0, nil
+
+	return reviewID, nil
 }
 
-func (m *DAOManager) UpdateProductReview(ctx context.Context, productID model.ID, reviewID model.ID, review *dto.Review) error {
+func (m *DAOManager) UpdateProductReview(ctx context.Context, productID model.ID, reviewID model.ID, r *dto.Review) error {
+	review := &model.Review{
+		ID:        reviewID,
+		ProductID: productID,
+		FirstName: r.FirstName,
+		LastName:  r.LastName,
+		Review:    r.Review,
+		Rating:    r.Rating,
+	}
+
+	if err := m.dao.UpdateProductReview(ctx, review); err != nil {
+		return fmt.Errorf("dao.UpdateProductReview: %w", err)
+	}
+
+	// TODO: save to cache
+
 	m.notifyFunc(ctx, productID, reviewID, "update")
+
 	return nil
 }
 
 func (m *DAOManager) DeleteProductReview(ctx context.Context, productID model.ID, reviewID model.ID) error {
+	if err := m.dao.DeleteProductReview(ctx, productID, reviewID); err != nil {
+		return fmt.Errorf("dao.DeleteProductReview: %w", err)
+	}
+
+	// TODO: invalidate cache
+
 	m.notifyFunc(ctx, productID, reviewID, "delete")
+
 	return nil
 }
 
-func (*DAOManager) GetProductReview(ctx context.Context, productID model.ID, reviewID model.ID) (*dto.Review, error) {
-	return nil, nil
+func (m *DAOManager) GetProductReview(ctx context.Context, productID model.ID, reviewID model.ID) (*dto.Review, error) {
+	// TODO: load reviews from cache
+
+	review, err := m.dao.GetProductReview(ctx, productID, reviewID)
+	if err != nil {
+		return nil, fmt.Errorf("dao.GetProductReview: %w", err)
+	}
+
+	if review == nil {
+		return nil, nil
+	}
+
+	return convertReview(review), nil
 }
 
-func (*DAOManager) ListProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*dto.Review, error) {
-	return []*dto.Review{}, nil
+func (m *DAOManager) ListProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*dto.Review, error) {
+	// TODO: load reviews from cache
+
+	reviews, err := m.dao.ListProductReviews(ctx, productID, offset, limit)
+	if err != nil {
+		return nil, fmt.Errorf("dao.ListProductReviews: %w", err)
+	}
+
+	result := make([]*dto.Review, 0, len(reviews))
+	for _, product := range reviews {
+		result = append(result, convertReview(product))
+	}
+
+	return result, nil
+}
+
+func convertReview(review *model.Review) *dto.Review {
+	return &dto.Review{
+		ID:        review.ID,
+		FirstName: review.FirstName,
+		LastName:  review.LastName,
+		Review:    review.Review,
+		Rating:    review.Rating,
+	}
 }

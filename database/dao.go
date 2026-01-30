@@ -13,4 +13,10 @@ type DAO interface {
 	GetProduct(ctx context.Context, id model.ID) (*model.Product, error)
 	GetProductRating(ctx context.Context, id model.ID) (float32, error)
 	ListProducts(ctx context.Context, offset int, limit int) ([]*model.Product, error)
+
+	CreateProductReview(ctx context.Context, review *model.Review) (model.ID, error)
+	UpdateProductReview(ctx context.Context, review *model.Review) error
+	DeleteProductReview(ctx context.Context, productID model.ID, reviewID model.ID) error
+	GetProductReview(ctx context.Context, productID model.ID, reviewID model.ID) (*model.Review, error)
+	ListProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*model.Review, error)
 }
