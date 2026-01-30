@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHandleListProducts(t *testing.T) {
+func TestHandleListReviews(t *testing.T) {
 	tests := []struct {
 		name       string
 		offset     string
@@ -33,13 +33,13 @@ func TestHandleListProducts(t *testing.T) {
 		{
 			name:       "valid response",
 			wantStatus: http.StatusOK,
-			wantBody:   `[{"id":1,"name":"P1","description":"P1 desc","price":100,"average_rating":1}]`,
+			wantBody:   `[{"id":1,"first_name":"Sergej","last_name":"Sizov","review":"Perfect","rating":5}]`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/products?offset=%s&limit=%s", tt.offset, tt.limit), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/products/1/reviews?offset=%s&limit=%s", tt.offset, tt.limit), nil)
 			rec := httptest.NewRecorder()
 			testRouter().ServeHTTP(rec, req)
 
@@ -49,29 +49,36 @@ func TestHandleListProducts(t *testing.T) {
 	}
 }
 
-func TestHandleGetProduct(t *testing.T) {
+func TestHandleGetReview(t *testing.T) {
 	tests := []struct {
 		name       string
-		id         int
+		productID  int
+		reviewID   int
 		wantStatus int
 		wantBody   string
 	}{
 		{
-			name:       "invalid id",
-			id:         404,
+			name:       "invalid productID",
+			productID:  404,
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "invalid reviewID",
+			reviewID:   404,
 			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:       "valid id",
-			id:         1,
+			productID:  1,
+			reviewID:   1,
 			wantStatus: http.StatusOK,
-			wantBody:   `{"id":1,"name":"P1","description":"P1 desc","price":100,"average_rating":1}`,
+			wantBody:   `{"id":1,"first_name":"Sergej","last_name":"Sizov","review":"Perfect","rating":5}`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/products/%d", tt.id), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/products/%d/reviews/%d", tt.productID, tt.reviewID), nil)
 			rec := httptest.NewRecorder()
 			testRouter().ServeHTTP(rec, req)
 
@@ -81,7 +88,7 @@ func TestHandleGetProduct(t *testing.T) {
 	}
 }
 
-func TestHandlePostProduct(t *testing.T) {
+func TestHandlePostReview(t *testing.T) {
 	tests := []struct {
 		name         string
 		body         string
@@ -92,25 +99,25 @@ func TestHandlePostProduct(t *testing.T) {
 		{
 			name:       "missing body",
 			wantStatus: http.StatusBadRequest,
-			wantBody:   "handlePostProduct - decode",
+			wantBody:   "handlePostReview - decode",
 		},
 		{
 			name:       "empty body",
 			body:       "{}",
 			wantStatus: http.StatusBadRequest,
-			wantBody:   "handlePostProduct - validate",
+			wantBody:   "handlePostReview - validate",
 		},
 		{
 			name:         "valid",
-			body:         `{"name":"P2","description":"P2 desc","price":200}`,
+			body:         `{"first_name":"John","last_name":"Doe","review":"Meh","rating":1}`,
 			wantStatus:   http.StatusCreated,
-			wantLocation: "/products/2",
+			wantLocation: "/products/1/reviews/2",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPost, "/products", strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, "/products/1/reviews", strings.NewReader(tt.body))
 			rec := httptest.NewRecorder()
 			testRouter().ServeHTTP(rec, req)
 
@@ -121,10 +128,11 @@ func TestHandlePostProduct(t *testing.T) {
 	}
 }
 
-func TestHandlePutProduct(t *testing.T) {
+func TestHandlePutReview(t *testing.T) {
 	tests := []struct {
 		name       string
-		id         int
+		productID  int
+		reviewID   int
 		body       string
 		wantStatus int
 	}{
@@ -138,22 +146,29 @@ func TestHandlePutProduct(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "invalid id",
-			id:         404,
-			body:       `{"name":"P2","description":"P2 desc","price":200}`,
+			name:       "invalid product id",
+			productID:  404,
+			body:       `{"first_name":"John","last_name":"Doe","review":"Meh","rating":1}`,
+			wantStatus: http.StatusInternalServerError,
+		},
+		{
+			name:       "invalid review id",
+			reviewID:   404,
+			body:       `{"first_name":"John","last_name":"Doe","review":"Meh","rating":1}`,
 			wantStatus: http.StatusInternalServerError,
 		},
 		{
 			name:       "valid",
-			id:         1,
-			body:       `{"name":"P2","description":"P2 desc","price":200}`,
+			productID:  1,
+			reviewID:   1,
+			body:       `{"first_name":"John","last_name":"Doe","review":"Meh","rating":1}`,
 			wantStatus: http.StatusOK,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/products/%d", tt.id), strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/products/%d/reviews/%d", tt.productID, tt.reviewID), strings.NewReader(tt.body))
 			rec := httptest.NewRecorder()
 			testRouter().ServeHTTP(rec, req)
 
@@ -162,27 +177,34 @@ func TestHandlePutProduct(t *testing.T) {
 	}
 }
 
-func TestHandleDeleteProduct(t *testing.T) {
+func TestHandleDeleteReview(t *testing.T) {
 	tests := []struct {
 		name       string
-		id         int
+		productID  int
+		reviewID   int
 		wantStatus int
 	}{
 		{
-			name:       "invalid id",
-			id:         404,
+			name:       "invalid product id",
+			productID:  404,
+			wantStatus: http.StatusInternalServerError,
+		},
+		{
+			name:       "invalid review id",
+			reviewID:   404,
 			wantStatus: http.StatusInternalServerError,
 		},
 		{
 			name:       "valid",
-			id:         1,
+			productID:  1,
+			reviewID:   1,
 			wantStatus: http.StatusNoContent,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/products/%d", tt.id), nil)
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/products/%d/reviews/%d", tt.productID, tt.reviewID), nil)
 			rec := httptest.NewRecorder()
 			testRouter().ServeHTTP(rec, req)
 

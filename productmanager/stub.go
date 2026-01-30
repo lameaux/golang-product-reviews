@@ -46,22 +46,46 @@ func (s *StubManager) ListProducts(int, int) []*dto.ProductWithRating {
 	return s.Products
 }
 
-func (*StubManager) CreateProductReview(productID model.ID, r *dto.Review) (model.ID, error) {
-	return 0, nil
+func (s *StubManager) CreateProductReview(productID model.ID, r *dto.Review) (model.ID, error) {
+	return len(s.Reviews) + 1, nil
 }
 
-func (*StubManager) DeleteProductReview(productID model.ID, reviewID model.ID) error {
+func (s *StubManager) DeleteProductReview(productID model.ID, reviewID model.ID) error {
+	if productID > len(s.Products) {
+		return errors.New("not found")
+	}
+
+	if reviewID > len(s.Reviews) {
+		return errors.New("not found")
+	}
+
 	return nil
 }
 
-func (*StubManager) UpdateProductReview(productID model.ID, reviewID model.ID, review *dto.Review) error {
+func (s *StubManager) UpdateProductReview(productID model.ID, reviewID model.ID, review *dto.Review) error {
+	if productID > len(s.Products) {
+		return errors.New("not found")
+	}
+
+	if reviewID > len(s.Reviews) {
+		return errors.New("not found")
+	}
+
 	return nil
 }
 
-func (*StubManager) GetProductReview(productID model.ID, reviewID model.ID) *dto.Review {
-	return nil
+func (s *StubManager) GetProductReview(productID model.ID, reviewID model.ID) *dto.Review {
+	if productID > len(s.Products) {
+		return nil
+	}
+
+	if reviewID > len(s.Reviews) {
+		return nil
+	}
+
+	return s.Reviews[reviewID-1]
 }
 
-func (*StubManager) ListProductReviews(productID model.ID, offset int, limit int) []*dto.Review {
-	return []*dto.Review{}
+func (s *StubManager) ListProductReviews(productID model.ID, offset int, limit int) []*dto.Review {
+	return s.Reviews
 }
