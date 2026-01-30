@@ -21,13 +21,13 @@ func (s *Server) handleListReviews() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		offset, err := getIntQuery(r, "offset", 0)
 		if err != nil {
-			http.Error(w, "invalid offset", http.StatusBadRequest)
+			http.Error(w, "handleListReviews - invalid offset", http.StatusBadRequest)
 			return
 		}
 
 		limit, err := getIntQuery(r, "limit", 100)
 		if err != nil {
-			http.Error(w, "invalid limit", http.StatusBadRequest)
+			http.Error(w, "handleListReviews - invalid limit", http.StatusBadRequest)
 			return
 		}
 
@@ -37,7 +37,12 @@ func (s *Server) handleListReviews() http.HandlerFunc {
 			return
 		}
 
-		reviews := s.manager.ListProductReviews(productID, offset, limit)
+		reviews, err := s.manager.ListProductReviews(r.Context(), productID, offset, limit)
+		if err != nil {
+			http.Error(w, "handleListReviews - ListProductReviews: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		s.sendAsJSON(w, reviews)
 	}
 }
@@ -56,7 +61,12 @@ func (s *Server) handleGetReview() http.HandlerFunc {
 			return
 		}
 
-		review := s.manager.GetProductReview(productID, reviewID)
+		review, err := s.manager.GetProductReview(r.Context(), productID, reviewID)
+		if err != nil {
+			http.Error(w, "handleGetReview - GetProductReview: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		if review == nil {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -88,7 +98,7 @@ func (s *Server) handlePostReview() http.HandlerFunc {
 			return
 		}
 
-		reviewID, err := s.manager.CreateProductReview(productID, &review)
+		reviewID, err := s.manager.CreateProductReview(r.Context(), productID, &review)
 		if err != nil {
 			http.Error(w, "handlePostReview - CreateProductReview: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -128,7 +138,7 @@ func (s *Server) handlePutReview() http.HandlerFunc {
 			return
 		}
 
-		if err := s.manager.UpdateProductReview(productID, reviewID, &review); err != nil {
+		if err := s.manager.UpdateProductReview(r.Context(), productID, reviewID, &review); err != nil {
 			http.Error(w, "handlePutReview - manager: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -151,7 +161,7 @@ func (s *Server) handleDeleteReview() http.HandlerFunc {
 			return
 		}
 
-		if err := s.manager.DeleteProductReview(productID, reviewID); err != nil {
+		if err := s.manager.DeleteProductReview(r.Context(), productID, reviewID); err != nil {
 			http.Error(w, "handleDeleteReview - manager: "+err.Error(), http.StatusInternalServerError)
 			return
 		}

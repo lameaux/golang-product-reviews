@@ -22,7 +22,7 @@ func stubProductManager() *productmanager.StubManager {
 					Description: "P1 desc",
 					Price:       100,
 				},
-				AverageRating: 1,
+				Rating: 1,
 			},
 		},
 		Reviews: []*dto.Review{

@@ -11,5 +11,5 @@ type Product struct {
 
 type ProductWithRating struct {
 	Product
-	AverageRating float32 `json:"average_rating"`
+	Rating float32 `json:"rating"`
 }

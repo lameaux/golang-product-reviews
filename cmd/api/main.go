@@ -10,6 +10,7 @@ import (
 
 	httpapi "github.com/lameaux/golang-product-reviews/api/http"
 	"github.com/lameaux/golang-product-reviews/database"
+	"github.com/lameaux/golang-product-reviews/notifier"
 	"github.com/lameaux/golang-product-reviews/productmanager"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -37,12 +38,13 @@ func run(ctx context.Context, logger *zerolog.Logger) error {
 		return fmt.Errorf("setupDatabase: %w", err)
 	}
 
+	reviewNotifier := notifier.New(logger)
+	manager := productmanager.New(dao, reviewNotifier.Notify)
+
 	httpPort, err := getHttpPort()
 	if err != nil {
 		return fmt.Errorf("invalid port: %w", err)
 	}
-
-	manager := productmanager.New(dao)
 
 	httpServer := httpapi.New(httpPort, logger, manager)
 
