@@ -1,7 +1,6 @@
 package productmanager
 
 import (
-	"context"
 	"testing"
 
 	"github.com/lameaux/golang-product-reviews/dto"
@@ -56,7 +55,7 @@ func TestDAOManager_DeleteProduct(t *testing.T) {
 	dao := new(mockedDAO)
 	dao.On("DeleteProduct", mock.Anything, 1).Return(nil)
 
-	m := New(dao, func(ctx context.Context, productID model.ID, reviewID model.ID, action string) {
+	m := New(dao, func(productID model.ID, reviewID model.ID, action string) {
 		assert.Equal(t, 1, productID)
 		assert.Equal(t, 0, reviewID)
 		assert.Equal(t, "delete", action)

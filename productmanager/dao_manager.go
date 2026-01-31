@@ -11,7 +11,7 @@ import (
 
 var _ Manager = (*DAOManager)(nil)
 
-type NotifyFunc func(ctx context.Context, productID model.ID, reviewID model.ID, action string)
+type NotifyFunc func(productID model.ID, reviewID model.ID, action string)
 
 type DAOManager struct {
 	dao        database.DAO
@@ -60,7 +60,7 @@ func (m *DAOManager) DeleteProduct(ctx context.Context, productID model.ID) erro
 		return fmt.Errorf("dao.UpdateProduct: %w", err)
 	}
 
-	m.notifyFunc(ctx, productID, 0, "delete")
+	m.notifyFunc(productID, 0, "delete")
 
 	return nil
 }
@@ -146,7 +146,7 @@ func (m *DAOManager) CreateProductReview(ctx context.Context, productID model.ID
 
 	// TODO: invalidate cache
 
-	m.notifyFunc(ctx, productID, reviewID, "create")
+	m.notifyFunc(productID, reviewID, "create")
 
 	return reviewID, nil
 }
@@ -167,7 +167,7 @@ func (m *DAOManager) UpdateProductReview(ctx context.Context, productID model.ID
 
 	// TODO: invalidate cache
 
-	m.notifyFunc(ctx, productID, reviewID, "update")
+	m.notifyFunc(productID, reviewID, "update")
 
 	return nil
 }
@@ -179,7 +179,7 @@ func (m *DAOManager) DeleteProductReview(ctx context.Context, productID model.ID
 
 	// TODO: invalidate cache
 
-	m.notifyFunc(ctx, productID, reviewID, "delete")
+	m.notifyFunc(productID, reviewID, "delete")
 
 	return nil
 }

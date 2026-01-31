@@ -12,6 +12,7 @@ import (
 	"github.com/lameaux/golang-product-reviews/database"
 	"github.com/lameaux/golang-product-reviews/notifier"
 	"github.com/lameaux/golang-product-reviews/productmanager"
+	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -38,7 +39,14 @@ func run(ctx context.Context, logger *zerolog.Logger) error {
 		return fmt.Errorf("setupDatabase: %w", err)
 	}
 
-	reviewNotifier := notifier.New(logger)
+	natsURL := os.Getenv("NATS_URL")
+	nc, err := nats.Connect(natsURL)
+	if err != nil {
+		log.Error().Str("url", natsURL).Err(err).Msg("NATS connect failed")
+	}
+	defer nc.Close()
+
+	reviewNotifier := notifier.New(logger, nc)
 	manager := productmanager.New(dao, reviewNotifier.Notify)
 
 	httpPort, err := getHttpPort()
