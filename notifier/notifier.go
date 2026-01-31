@@ -28,6 +28,6 @@ func (n *Notifier) Notify(productID model.ID, reviewID model.ID, action string) 
 		Msg("notify")
 
 	if err := n.natsConn.Publish("reviews", []byte(msg)); err != nil {
-		n.logger.Error().Err(err).Msg("field to publish message to NATS")
+		n.logger.Error().Err(err).Msg("failed to publish message to NATS")
 	}
 }

@@ -1,6 +1,12 @@
 # Golang Product Reviews
 
-Sergej Sizov
+REST API service with the following main components: 
+an API service for managing products and reviews, 
+an audit service for logging review changes, 
+PostgreSQL for persistence, and NATS for messaging. 
+
+The implementation includes HTTP handlers, business logic layer, 
+database access layer, and comprehensive test coverage.
 
 # Components
 
@@ -15,7 +21,7 @@ Infra:
 
 The whole environment is deployed using **Docker Compose**.
 
-# Buiding and running
+# Building and running
 
 ### Building locally
 
@@ -98,5 +104,5 @@ I am using both stubs and mocks where it makes more sense.
 - Tests for Postgres using Test containers
 - Integration E2E tests, load tests
 - Run CI tests for PRs with GitHub actions
-- Warm-up caches for hot products
-- More observability with metrics 
+- Keep product ratings cache warm, otherwise there is N+1 query problem
+- More observability with metrics

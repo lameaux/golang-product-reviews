@@ -64,6 +64,10 @@ func (r *RedisCache) GetProductRating(ctx context.Context, productID model.ID) (
 		return 0, fmt.Errorf("GetProductRating: %w", err)
 	}
 
+	if err := r.client.Expire(ctx, key, ttl).Err(); err != nil {
+		r.logger.Warn().Str("key", key).Msg("GetProductRating ttl refresh failed")
+	}
+
 	r.logger.Debug().Str("key", key).Float32("rating", rating).Msg("GetProductRating")
 	return rating, nil
 }
