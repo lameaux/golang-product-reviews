@@ -95,7 +95,8 @@ I am using both stubs and mocks where it makes more sense.
 
 ### Things to improve
 
-- Tests for Postgres using TestContainers.
-- Integration E2E tests.
-- Run tests in CI on GitHub Actions.
+- Tests for Postgres using Test containers
+- Integration E2E tests, load tests
+- Run CI tests for PRs with GitHub actions
 - Warm-up caches for hot products
+- More observability with metrics 

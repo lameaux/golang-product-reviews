@@ -14,6 +14,7 @@ import (
 var _ Lock = (*RedisLock)(nil)
 
 const ttl = 10 * time.Second
+const prefix = "products:locks"
 
 type RedisLock struct {
 	logger *zerolog.Logger
@@ -25,7 +26,7 @@ func NewRedis(logger *zerolog.Logger, client *redis.Client) *RedisLock {
 }
 
 func (r *RedisLock) Lock(ctx context.Context, id model.ID) error {
-	key := fmt.Sprintf("product:%d", id)
+	key := fmt.Sprintf("%s:%d", prefix, id)
 	ok, err := r.client.SetNX(ctx, key, "1", ttl).Result()
 	if err != nil {
 		return fmt.Errorf("lock: %w", err)
@@ -40,7 +41,7 @@ func (r *RedisLock) Lock(ctx context.Context, id model.ID) error {
 }
 
 func (r *RedisLock) Unlock(ctx context.Context, id model.ID) error {
-	key := fmt.Sprintf("product:%d", id)
+	key := fmt.Sprintf("%s:%d", prefix, id)
 
 	if err := r.client.Del(ctx, key).Err(); err != nil {
 		return fmt.Errorf("unlock: %w", err)
