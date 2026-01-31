@@ -1,7 +1,6 @@
 package productmanager
 
 import (
-	"context"
 	"testing"
 
 	"github.com/lameaux/golang-product-reviews/dto"
@@ -20,7 +19,7 @@ func TestDAOManager_CreateProductReview(t *testing.T) {
 		Rating:    5,
 	}).Return(1, nil)
 
-	m := New(dao, func(ctx context.Context, productID model.ID, reviewID model.ID, action string) {
+	m := New(dao, func(productID model.ID, reviewID model.ID, action string) {
 		assert.Equal(t, 2, productID)
 		assert.Equal(t, 1, reviewID)
 		assert.Equal(t, "create", action)
@@ -49,7 +48,7 @@ func TestDAOManager_UpdateProductReview(t *testing.T) {
 		Rating:    5,
 	}).Return(nil)
 
-	m := New(dao, func(ctx context.Context, productID model.ID, reviewID model.ID, action string) {
+	m := New(dao, func(productID model.ID, reviewID model.ID, action string) {
 		assert.Equal(t, 2, productID)
 		assert.Equal(t, 1, reviewID)
 		assert.Equal(t, "update", action)
@@ -70,7 +69,7 @@ func TestDAOManager_DeleteProductReview(t *testing.T) {
 	dao := new(mockedDAO)
 	dao.On("DeleteProductReview", mock.Anything, 1).Return(nil)
 
-	m := New(dao, func(ctx context.Context, productID model.ID, reviewID model.ID, action string) {
+	m := New(dao, func(productID model.ID, reviewID model.ID, action string) {
 		assert.Equal(t, 2, productID)
 		assert.Equal(t, 1, reviewID)
 		assert.Equal(t, "delete", action)
