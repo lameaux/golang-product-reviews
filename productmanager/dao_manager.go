@@ -64,7 +64,7 @@ func (m *DAOManager) UpdateProduct(ctx context.Context, productID model.ID, p *d
 
 func (m *DAOManager) DeleteProduct(ctx context.Context, productID model.ID) error {
 	if err := m.dao.DeleteProduct(ctx, productID); err != nil {
-		return fmt.Errorf("dao.UpdateProduct: %w", err)
+		return fmt.Errorf("dao.DeleteProduct: %w", err)
 	}
 
 	m.cacheDAO.InvalidateProduct(ctx, productID)
