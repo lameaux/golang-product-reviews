@@ -2,6 +2,9 @@ package lock
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"time"
 
 	"github.com/lameaux/golang-product-reviews/model"
 	"github.com/redis/go-redis/v9"
@@ -9,6 +12,8 @@ import (
 )
 
 var _ Lock = (*RedisLock)(nil)
+
+const ttl = 10 * time.Second
 
 type RedisLock struct {
 	logger *zerolog.Logger
@@ -20,11 +25,27 @@ func NewRedis(logger *zerolog.Logger, client *redis.Client) *RedisLock {
 }
 
 func (r *RedisLock) Lock(ctx context.Context, id model.ID) error {
-	r.logger.Debug().Int("id", id).Msg("redis lock")
+	key := fmt.Sprintf("product:%d", id)
+	ok, err := r.client.SetNX(ctx, key, "1", ttl).Result()
+	if err != nil {
+		return fmt.Errorf("lock: %w", err)
+	}
+	if !ok {
+		return errors.New("resource is locked")
+	}
+
+	r.logger.Debug().Str("key", key).Msg("redis lock")
+
 	return nil
 }
 
 func (r *RedisLock) Unlock(ctx context.Context, id model.ID) error {
-	r.logger.Debug().Int("id", id).Msg("redis unlock")
+	key := fmt.Sprintf("product:%d", id)
+
+	if err := r.client.Del(ctx, key).Err(); err != nil {
+		return fmt.Errorf("unlock: %w", err)
+	}
+
+	r.logger.Debug().Str("key", key).Msg("redis unlock")
 	return nil
 }
