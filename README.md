@@ -11,7 +11,7 @@ Services:
 Infra:
 - **PostgreSQL** for persistence.
 - **NATS** for messaging.
-- **Redis** for caching.
+- **Redis** for caching and locking.
 
 The whole environment is deployed using **Docker Compose**.
 
@@ -40,6 +40,11 @@ docker compose up
 Check `docs` for request examples.
 
 # Design consideration
+
+The application is built with SOLID principles in mind.
+Components depend on interfaces rather than their implementations.
+Dependency injection principle is used to link components.
+It allows easy unit testing and extendability.
 
 ### Building
 
@@ -74,8 +79,14 @@ and works out of the box.
 ### Caching
 
 Average rating and reviews are cached.
+We are caching on reads and invalidating on write.
 Caching is implemented using Redis.
+We set TTL in case invalidation fails.
+
+### Locking
+
 Redis locks are used to implement single flight pattern on cache miss.
+The mechanism is simplified and does not handle edge-cases.
 
 ### Test coverage
 
@@ -87,3 +98,4 @@ I am using both stubs and mocks where it makes more sense.
 - Tests for Postgres using TestContainers.
 - Integration E2E tests.
 - Run tests in CI on GitHub Actions.
+- Warm-up caches for hot products
