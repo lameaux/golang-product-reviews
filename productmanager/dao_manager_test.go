@@ -3,7 +3,9 @@ package productmanager
 import (
 	"context"
 
+	"github.com/lameaux/golang-product-reviews/cache"
 	"github.com/lameaux/golang-product-reviews/database"
+	"github.com/lameaux/golang-product-reviews/lock"
 	"github.com/lameaux/golang-product-reviews/model"
 	"github.com/stretchr/testify/mock"
 )
@@ -12,7 +14,17 @@ type mockedDAO struct {
 	mock.Mock
 }
 
+type mockedCache struct {
+	mock.Mock
+}
+
+type mockedLock struct {
+	mock.Mock
+}
+
 var _ database.DAO = (*mockedDAO)(nil)
+var _ cache.DAO = (*mockedCache)(nil)
+var _ lock.Lock = (*mockedLock)(nil)
 
 func (m *mockedDAO) CreateProduct(ctx context.Context, product *model.Product) (model.ID, error) {
 	args := m.Called(ctx, product)
@@ -63,4 +75,44 @@ func (m *mockedDAO) GetProductReview(ctx context.Context, reviewID model.ID) (*m
 func (m *mockedDAO) ListProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*model.Review, error) {
 	args := m.Called(ctx, productID, offset, limit)
 	return args.Get(0).([]*model.Review), args.Error(1)
+}
+
+func (m *mockedCache) InvalidateProduct(ctx context.Context, productID model.ID) {
+	m.Called(ctx, productID)
+}
+
+func (m *mockedCache) GetProductRating(ctx context.Context, productID model.ID) (float32, error) {
+	args := m.Called(ctx, productID)
+	return args.Get(0).(float32), args.Error(1)
+}
+func (m *mockedCache) SetProductRating(ctx context.Context, productID model.ID, rating float32) {
+	m.Called(ctx, productID, rating)
+}
+
+func (m *mockedCache) GetProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*model.Review, error) {
+	args := m.Called(ctx, productID, offset, limit)
+	return args.Get(0).([]*model.Review), args.Error(1)
+}
+
+func (m *mockedCache) SetProductReviews(ctx context.Context, productID model.ID, offset int, limit int, reviews []*model.Review) {
+	m.Called(ctx, productID, offset, limit, reviews)
+}
+
+func (m *mockedCache) GetProductReview(ctx context.Context, productID model.ID, reviewID model.ID) (*model.Review, error) {
+	args := m.Called(ctx, productID, reviewID)
+	return args.Get(0).(*model.Review), args.Error(1)
+}
+
+func (m *mockedCache) SetProductReview(ctx context.Context, productID model.ID, reviewID model.ID, review *model.Review) {
+	m.Called(ctx, productID, reviewID, review)
+}
+
+func (m *mockedLock) Lock(ctx context.Context, productID model.ID) error {
+	args := m.Called(ctx, productID)
+	return args.Error(0)
+}
+
+func (m *mockedLock) Unlock(ctx context.Context, productID model.ID) error {
+	args := m.Called(ctx, productID)
+	return args.Error(0)
 }
