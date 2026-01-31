@@ -3,6 +3,7 @@ package productmanager
 import (
 	"testing"
 
+	"github.com/lameaux/golang-product-reviews/cache"
 	"github.com/lameaux/golang-product-reviews/dto"
 	"github.com/lameaux/golang-product-reviews/model"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ func TestDAOManager_CreateProduct(t *testing.T) {
 		Price:       100,
 	}).Return(1, nil)
 
-	m := New(dao, nil)
+	m := New(dao, nil, nil, nil)
 
 	p := &dto.Product{
 		Name:        "P1",
@@ -39,7 +40,7 @@ func TestDAOManager_UpdateProduct(t *testing.T) {
 		Price:       100,
 	}).Return(nil)
 
-	m := New(dao, nil)
+	m := New(dao, nil, nil, nil)
 
 	p := &dto.Product{
 		Name:        "P1",
@@ -55,7 +56,10 @@ func TestDAOManager_DeleteProduct(t *testing.T) {
 	dao := new(mockedDAO)
 	dao.On("DeleteProduct", mock.Anything, 1).Return(nil)
 
-	m := New(dao, func(productID model.ID, reviewID model.ID, action string) {
+	cacheDAO := new(mockedCache)
+	cacheDAO.On("InvalidateProduct", mock.Anything, 1).Once()
+
+	m := New(dao, cacheDAO, nil, func(productID model.ID, reviewID model.ID, action string) {
 		assert.Equal(t, 1, productID)
 		assert.Equal(t, 0, reviewID)
 		assert.Equal(t, "delete", action)
@@ -76,7 +80,15 @@ func TestDAOManager_GetProduct(t *testing.T) {
 
 	dao.On("GetProductRating", mock.Anything, 1).Return(float32(4.9), nil)
 
-	m := New(dao, nil)
+	cacheDAO := new(mockedCache)
+	cacheDAO.On("GetProductRating", mock.Anything, 1).Return(float32(0), cache.NotFound).Twice()
+	cacheDAO.On("SetProductRating", mock.Anything, 1, float32(4.9)).Once()
+
+	lock := new(mockedLock)
+	lock.On("Lock", mock.Anything, 1).Return(nil)
+	lock.On("Unlock", mock.Anything, 1).Return(nil)
+
+	m := New(dao, cacheDAO, lock, nil)
 
 	product, err := m.GetProduct(t.Context(), 1)
 	assert.NoError(t, err)
@@ -106,7 +118,15 @@ func TestDAOManager_ListProducts(t *testing.T) {
 
 	dao.On("GetProductRating", mock.Anything, 1).Return(float32(4.9), nil)
 
-	m := New(dao, nil)
+	cacheDAO := new(mockedCache)
+	cacheDAO.On("GetProductRating", mock.Anything, 1).Return(float32(0), cache.NotFound).Twice()
+	cacheDAO.On("SetProductRating", mock.Anything, 1, float32(4.9)).Once()
+
+	lock := new(mockedLock)
+	lock.On("Lock", mock.Anything, 1).Return(nil)
+	lock.On("Unlock", mock.Anything, 1).Return(nil)
+
+	m := New(dao, cacheDAO, lock, nil)
 
 	products, err := m.ListProducts(t.Context(), 0, 100)
 	assert.NoError(t, err)

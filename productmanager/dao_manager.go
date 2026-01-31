@@ -2,10 +2,13 @@ package productmanager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/lameaux/golang-product-reviews/cache"
 	"github.com/lameaux/golang-product-reviews/database"
 	"github.com/lameaux/golang-product-reviews/dto"
+	"github.com/lameaux/golang-product-reviews/lock"
 	"github.com/lameaux/golang-product-reviews/model"
 )
 
@@ -15,14 +18,18 @@ type NotifyFunc func(productID model.ID, reviewID model.ID, action string)
 
 type DAOManager struct {
 	dao        database.DAO
+	cacheDAO   cache.DAO
+	lock       lock.Lock
 	notifyFunc NotifyFunc
 }
 
 func New(
 	dao database.DAO,
+	cacheDAO cache.DAO,
+	lock lock.Lock,
 	notifyFunc NotifyFunc,
 ) *DAOManager {
-	return &DAOManager{dao: dao, notifyFunc: notifyFunc}
+	return &DAOManager{dao: dao, cacheDAO: cacheDAO, lock: lock, notifyFunc: notifyFunc}
 }
 
 func (m *DAOManager) CreateProduct(ctx context.Context, p *dto.Product) (model.ID, error) {
@@ -60,6 +67,7 @@ func (m *DAOManager) DeleteProduct(ctx context.Context, productID model.ID) erro
 		return fmt.Errorf("dao.UpdateProduct: %w", err)
 	}
 
+	m.cacheDAO.InvalidateProduct(ctx, productID)
 	m.notifyFunc(productID, 0, "delete")
 
 	return nil
@@ -115,17 +123,37 @@ func convertProductWithRating(product *model.Product, rating float32) *dto.Produ
 }
 
 func (m *DAOManager) getProductRating(ctx context.Context, id model.ID) (float32, error) {
-	// TODO: load from cache
-
-	// fallback to DB
-
-	// single flight
-	rating, err := m.dao.GetProductRating(ctx, id)
+	rating, err := m.cacheDAO.GetProductRating(ctx, id)
 	if err != nil {
-		return 0, fmt.Errorf("dao.GetProductAverageRating: %w", err)
+		if !errors.Is(err, cache.NotFound) {
+			return 0, err
+		}
+	} else {
+		return rating, nil
 	}
 
-	// TODO: save to cache
+	// single flight
+	if err := m.lock.Lock(ctx, id); err != nil {
+		return 0, fmt.Errorf("lock.Lock: %w", err)
+	}
+	defer m.lock.Unlock(ctx, id)
+
+	// check again after obtaining lock
+	rating, err = m.cacheDAO.GetProductRating(ctx, id)
+	if err != nil {
+		if !errors.Is(err, cache.NotFound) {
+			return 0, err
+		}
+	} else {
+		return rating, nil
+	}
+
+	rating, err = m.dao.GetProductRating(ctx, id)
+	if err != nil {
+		return 0, fmt.Errorf("dao.GetProductRating: %w", err)
+	}
+
+	m.cacheDAO.SetProductRating(ctx, id, rating)
 
 	return rating, nil
 }
@@ -144,7 +172,7 @@ func (m *DAOManager) CreateProductReview(ctx context.Context, productID model.ID
 		return 0, fmt.Errorf("dao.CreateProductReview: %w", err)
 	}
 
-	// TODO: invalidate cache
+	m.cacheDAO.InvalidateProduct(ctx, productID)
 
 	m.notifyFunc(productID, reviewID, "create")
 
@@ -165,7 +193,7 @@ func (m *DAOManager) UpdateProductReview(ctx context.Context, productID model.ID
 		return fmt.Errorf("dao.UpdateProductReview: %w", err)
 	}
 
-	// TODO: invalidate cache
+	m.cacheDAO.InvalidateProduct(ctx, productID)
 
 	m.notifyFunc(productID, reviewID, "update")
 
@@ -177,7 +205,7 @@ func (m *DAOManager) DeleteProductReview(ctx context.Context, productID model.ID
 		return fmt.Errorf("dao.DeleteProductReview: %w", err)
 	}
 
-	// TODO: invalidate cache
+	m.cacheDAO.InvalidateProduct(ctx, productID)
 
 	m.notifyFunc(productID, reviewID, "delete")
 
@@ -185,12 +213,32 @@ func (m *DAOManager) DeleteProductReview(ctx context.Context, productID model.ID
 }
 
 func (m *DAOManager) GetProductReview(ctx context.Context, productID model.ID, reviewID model.ID) (*dto.Review, error) {
-	// TODO: load review from cache
-
-	// fallback to db
+	review, err := m.cacheDAO.GetProductReview(ctx, productID, reviewID)
+	if err != nil {
+		if !errors.Is(err, cache.NotFound) {
+			return nil, err
+		}
+	} else {
+		return convertReview(review), nil
+	}
 
 	// single flight
-	review, err := m.dao.GetProductReview(ctx, reviewID)
+	if err := m.lock.Lock(ctx, productID); err != nil {
+		return nil, fmt.Errorf("lock.Lock: %w", err)
+	}
+	defer m.lock.Unlock(ctx, productID)
+
+	// check again after obtaining lock
+	review, err = m.cacheDAO.GetProductReview(ctx, productID, reviewID)
+	if err != nil {
+		if !errors.Is(err, cache.NotFound) {
+			return nil, err
+		}
+	} else {
+		return convertReview(review), nil
+	}
+
+	review, err = m.dao.GetProductReview(ctx, reviewID)
 	if err != nil {
 		return nil, fmt.Errorf("dao.GetProductReview: %w", err)
 	}
@@ -199,7 +247,7 @@ func (m *DAOManager) GetProductReview(ctx context.Context, productID model.ID, r
 		return nil, nil
 	}
 
-	// save to cache
+	m.cacheDAO.SetProductReview(ctx, productID, reviewID, review)
 
 	return convertReview(review), nil
 }

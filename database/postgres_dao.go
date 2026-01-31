@@ -48,6 +48,12 @@ func (d *postgresDAO) UpdateProduct(ctx context.Context, product *model.Product)
 func (d *postgresDAO) DeleteProduct(ctx context.Context, id model.ID) error {
 	product := &model.Product{ID: id}
 	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+
+		// delete reviews first
+		if err := tx.Where("product_id = ?", id).Delete(&model.Review{}).Error; err != nil {
+			return fmt.Errorf("tx.Delete: %w", err)
+		}
+
 		if err := tx.Delete(product).Error; err != nil {
 			return fmt.Errorf("tx.Delete: %w", err)
 		}
@@ -162,6 +168,7 @@ func (d *postgresDAO) ListProductReviews(ctx context.Context, productID model.ID
 
 	if err := d.db.WithContext(ctx).
 		Table(model.TableReviews).
+		Where("product_id = ?", productID).
 		Offset(offset).
 		Limit(limit).
 		Scan(&result).Error; err != nil {

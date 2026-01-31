@@ -9,7 +9,9 @@ import (
 	"syscall"
 
 	httpapi "github.com/lameaux/golang-product-reviews/api/http"
+	"github.com/lameaux/golang-product-reviews/cache"
 	"github.com/lameaux/golang-product-reviews/database"
+	"github.com/lameaux/golang-product-reviews/lock"
 	"github.com/lameaux/golang-product-reviews/notifier"
 	"github.com/lameaux/golang-product-reviews/productmanager"
 	"github.com/nats-io/nats.go"
@@ -46,8 +48,11 @@ func run(ctx context.Context, logger *zerolog.Logger) error {
 	}
 	defer nc.Close()
 
+	redisCache := cache.NewRedis(logger)
+	redisLock := lock.NewRedis(logger)
 	reviewNotifier := notifier.New(logger, nc)
-	manager := productmanager.New(dao, reviewNotifier.Notify)
+
+	manager := productmanager.New(dao, redisCache, redisLock, reviewNotifier.Notify)
 
 	httpPort, err := getHttpPort()
 	if err != nil {
