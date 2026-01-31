@@ -52,12 +52,12 @@ func (m *mockedDAO) UpdateProductReview(ctx context.Context, review *model.Revie
 	args := m.Called(ctx, review)
 	return args.Error(0)
 }
-func (m *mockedDAO) DeleteProductReview(ctx context.Context, productID model.ID, reviewID model.ID) error {
-	args := m.Called(ctx, productID, reviewID)
+func (m *mockedDAO) DeleteProductReview(ctx context.Context, reviewID model.ID) error {
+	args := m.Called(ctx, reviewID)
 	return args.Error(0)
 }
-func (m *mockedDAO) GetProductReview(ctx context.Context, productID model.ID, reviewID model.ID) (*model.Review, error) {
-	args := m.Called(ctx, productID, reviewID)
+func (m *mockedDAO) GetProductReview(ctx context.Context, reviewID model.ID) (*model.Review, error) {
+	args := m.Called(ctx, reviewID)
 	return args.Get(0).(*model.Review), args.Error(1)
 }
 func (m *mockedDAO) ListProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*model.Review, error) {

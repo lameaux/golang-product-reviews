@@ -118,6 +118,8 @@ func (m *DAOManager) getProductRating(ctx context.Context, id model.ID) (float32
 	// TODO: load from cache
 
 	// fallback to DB
+
+	// single flight
 	rating, err := m.dao.GetProductRating(ctx, id)
 	if err != nil {
 		return 0, fmt.Errorf("dao.GetProductAverageRating: %w", err)
@@ -142,7 +144,7 @@ func (m *DAOManager) CreateProductReview(ctx context.Context, productID model.ID
 		return 0, fmt.Errorf("dao.CreateProductReview: %w", err)
 	}
 
-	// TODO: save to cache
+	// TODO: invalidate cache
 
 	m.notifyFunc(ctx, productID, reviewID, "create")
 
@@ -163,7 +165,7 @@ func (m *DAOManager) UpdateProductReview(ctx context.Context, productID model.ID
 		return fmt.Errorf("dao.UpdateProductReview: %w", err)
 	}
 
-	// TODO: save to cache
+	// TODO: invalidate cache
 
 	m.notifyFunc(ctx, productID, reviewID, "update")
 
@@ -171,7 +173,7 @@ func (m *DAOManager) UpdateProductReview(ctx context.Context, productID model.ID
 }
 
 func (m *DAOManager) DeleteProductReview(ctx context.Context, productID model.ID, reviewID model.ID) error {
-	if err := m.dao.DeleteProductReview(ctx, productID, reviewID); err != nil {
+	if err := m.dao.DeleteProductReview(ctx, reviewID); err != nil {
 		return fmt.Errorf("dao.DeleteProductReview: %w", err)
 	}
 
@@ -183,9 +185,12 @@ func (m *DAOManager) DeleteProductReview(ctx context.Context, productID model.ID
 }
 
 func (m *DAOManager) GetProductReview(ctx context.Context, productID model.ID, reviewID model.ID) (*dto.Review, error) {
-	// TODO: load reviews from cache
+	// TODO: load review from cache
 
-	review, err := m.dao.GetProductReview(ctx, productID, reviewID)
+	// fallback to db
+
+	// single flight
+	review, err := m.dao.GetProductReview(ctx, reviewID)
 	if err != nil {
 		return nil, fmt.Errorf("dao.GetProductReview: %w", err)
 	}
@@ -194,16 +199,23 @@ func (m *DAOManager) GetProductReview(ctx context.Context, productID model.ID, r
 		return nil, nil
 	}
 
+	// save to cache
+
 	return convertReview(review), nil
 }
 
 func (m *DAOManager) ListProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*dto.Review, error) {
 	// TODO: load reviews from cache
 
+	// fallback to db
+
+	// single flight
 	reviews, err := m.dao.ListProductReviews(ctx, productID, offset, limit)
 	if err != nil {
 		return nil, fmt.Errorf("dao.ListProductReviews: %w", err)
 	}
+
+	// save to cache
 
 	result := make([]*dto.Review, 0, len(reviews))
 	for _, product := range reviews {

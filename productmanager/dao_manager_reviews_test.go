@@ -68,7 +68,7 @@ func TestDAOManager_UpdateProductReview(t *testing.T) {
 
 func TestDAOManager_DeleteProductReview(t *testing.T) {
 	dao := new(mockedDAO)
-	dao.On("DeleteProductReview", mock.Anything, 2, 1).Return(nil)
+	dao.On("DeleteProductReview", mock.Anything, 1).Return(nil)
 
 	m := New(dao, func(ctx context.Context, productID model.ID, reviewID model.ID, action string) {
 		assert.Equal(t, 2, productID)
@@ -82,7 +82,7 @@ func TestDAOManager_DeleteProductReview(t *testing.T) {
 
 func TestDAOManager_GetProductReview(t *testing.T) {
 	dao := new(mockedDAO)
-	dao.On("GetProductReview", mock.Anything, 2, 1).Return(&model.Review{
+	dao.On("GetProductReview", mock.Anything, 1).Return(&model.Review{
 		ID:        1,
 		ProductID: 2,
 		FirstName: "Sergej",
