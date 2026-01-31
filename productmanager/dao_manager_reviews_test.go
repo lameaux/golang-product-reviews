@@ -140,8 +140,8 @@ func TestDAOManager_ListProductReviews(t *testing.T) {
 	dao.On("ListProductReviews", mock.Anything, 2, 0, 100).Return(reviews, nil)
 
 	cacheDAO := new(mockedCache)
-	cacheDAO.On("GetProductReview", mock.Anything, 2, 0, 100).Return(([]*model.Review)(nil), cache.NotFound).Twice()
-	cacheDAO.On("SetProductReview", mock.Anything, 2, 0, 100, reviews).Once()
+	cacheDAO.On("GetProductReviews", mock.Anything, 2, 0, 100).Return(([]*model.Review)(nil), cache.NotFound).Twice()
+	cacheDAO.On("SetProductReviews", mock.Anything, 2, 0, 100, reviews).Once()
 
 	lock := new(mockedLock)
 	lock.On("Lock", mock.Anything, 2).Return(nil)

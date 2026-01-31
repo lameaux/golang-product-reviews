@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/lameaux/golang-product-reviews/model"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 )
 
@@ -11,10 +12,11 @@ var _ DAO = (*RedisCache)(nil)
 
 type RedisCache struct {
 	logger *zerolog.Logger
+	client *redis.Client
 }
 
-func NewRedis(logger *zerolog.Logger) *RedisCache {
-	return &RedisCache{logger: logger}
+func NewRedis(logger *zerolog.Logger, client *redis.Client) *RedisCache {
+	return &RedisCache{logger: logger, client: client}
 }
 
 func (r *RedisCache) InvalidateProduct(ctx context.Context, productID model.ID) {
@@ -22,6 +24,7 @@ func (r *RedisCache) InvalidateProduct(ctx context.Context, productID model.ID) 
 }
 
 func (r *RedisCache) GetProductRating(ctx context.Context, productID model.ID) (float32, error) {
+	r.logger.Debug().Int("id", productID).Msg("GetProductRating")
 	return 0, NotFound
 }
 func (r *RedisCache) SetProductRating(ctx context.Context, productID model.ID, rating float32) {

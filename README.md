@@ -84,5 +84,6 @@ I am using both stubs and mocks where it makes more sense.
 
 ### Things to improve
 
-- Write tests for postgres layer and run them against TestContainers.
-- Implement CI with GitHub Actions pipelines.
+- Tests for Postgres using TestContainers.
+- Integration E2E tests.
+- Run tests in CI on GitHub Actions.

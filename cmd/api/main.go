@@ -17,10 +17,17 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	if os.Getenv("DEBUG") == "true" {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
 	logger := log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	logger.Info().Msg("api starting")
@@ -41,15 +48,20 @@ func run(ctx context.Context, logger *zerolog.Logger) error {
 		return fmt.Errorf("setupDatabase: %w", err)
 	}
 
-	natsURL := os.Getenv("NATS_URL")
-	nc, err := nats.Connect(natsURL)
+	rdb, err := setupRedis(ctx)
 	if err != nil {
-		log.Error().Str("url", natsURL).Err(err).Msg("NATS connect failed")
+		return fmt.Errorf("setupRedis: %w", err)
+	}
+
+	redisCache := cache.NewRedis(logger, rdb)
+	redisLock := lock.NewRedis(logger, rdb)
+
+	nc, err := setupNats()
+	if err != nil {
+		return fmt.Errorf("setupNats: %w", err)
 	}
 	defer nc.Close()
 
-	redisCache := cache.NewRedis(logger)
-	redisLock := lock.NewRedis(logger)
 	reviewNotifier := notifier.New(logger, nc)
 
 	manager := productmanager.New(dao, redisCache, redisLock, reviewNotifier.Notify)
@@ -95,6 +107,25 @@ func setupDatabase() (database.DAO, error) {
 	}
 
 	return database.NewPostgresDAO(gormDB), nil
+}
+
+func setupNats() (*nats.Conn, error) {
+	natsURL := os.Getenv("NATS_URL")
+	return nats.Connect(natsURL)
+}
+
+func setupRedis(ctx context.Context) (*redis.Client, error) {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     os.Getenv("REDIS_URL"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       0,
+	})
+
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("setupRedis: %w", err)
+	}
+
+	return rdb, nil
 }
 
 func getHttpPort() (int, error) {
