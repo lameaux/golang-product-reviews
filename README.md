@@ -41,20 +41,48 @@ Check `docs` for request examples.
 
 # Design consideration
 
+### Building
+
+There is a make file that automates project build, lint, test.
+
+### Deployment
+
 The application is dockerized, we can easily run it in Docker Compose.
 
-There are 2 services: api server and audit logger.
+### Rest API
 
 In order to expose a REST API we need to implement an HTTP server. 
 I am using Gorilla Mux for request routing.
 
-HTTP handlers and service layer are covered with unit tests.
+### Persistence
 
 Products and reviews are stored in Postgres database.
-Database migrations are applied on application start.
-Gorm is used for mapping relational data into structs. 
+Gorm is used for mapping relational data into structs.
 
+### DB Migrations
+
+Database migrations can be executed on application start.
+This is controlled by ENV variable.
+Once going into production we would run migration either manually or
+on canary pod only.
+
+### Messaging
+
+For purpose of this exercise I am using NATS as it is lightweight
+and works out of the box.
+
+### Caching
+
+Average rating and reviews are cached.
 Caching is implemented using Redis.
-Messaging is implemented using NATS.
+Redis locks are used to implement single flight pattern on cache miss.
 
+### Test coverage
 
+HTTP handlers and service layer are covered with unit tests.
+I am using both stubs and mocks where it makes more sense.
+
+### Things to improve
+
+- Write tests for postgres layer and run them against TestContainers.
+- Implement CI with GitHub Actions pipelines.
