@@ -7,9 +7,10 @@ services:
     container_name: api
     environment:
       POSTGRES_URL: postgres://myuser:mypassword@postgres:5432/mydb?sslmode=disable
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis:6379
       NATS_URL: nats://nats:4222
       RUN_MIGRATIONS: true
+      DEBUG: true
     ports:
       - "8080:8080"
     restart: unless-stopped

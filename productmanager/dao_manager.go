@@ -253,24 +253,43 @@ func (m *DAOManager) GetProductReview(ctx context.Context, productID model.ID, r
 }
 
 func (m *DAOManager) ListProductReviews(ctx context.Context, productID model.ID, offset int, limit int) ([]*dto.Review, error) {
-	// TODO: load reviews from cache
-
-	// fallback to db
+	reviews, err := m.cacheDAO.GetProductReviews(ctx, productID, offset, limit)
+	if err != nil {
+		if !errors.Is(err, cache.NotFound) {
+			return nil, err
+		}
+	} else {
+		return convertReviews(reviews), nil
+	}
 
 	// single flight
-	reviews, err := m.dao.ListProductReviews(ctx, productID, offset, limit)
+	if err := m.lock.Lock(ctx, productID); err != nil {
+		return nil, fmt.Errorf("lock.Lock: %w", err)
+	}
+	defer m.lock.Unlock(ctx, productID)
+
+	// check again after obtaining lock
+	reviews, err = m.cacheDAO.GetProductReviews(ctx, productID, offset, limit)
+	if err != nil {
+		if !errors.Is(err, cache.NotFound) {
+			return nil, err
+		}
+	} else {
+		return convertReviews(reviews), nil
+	}
+
+	reviews, err = m.dao.ListProductReviews(ctx, productID, offset, limit)
 	if err != nil {
 		return nil, fmt.Errorf("dao.ListProductReviews: %w", err)
 	}
 
-	// save to cache
-
-	result := make([]*dto.Review, 0, len(reviews))
-	for _, product := range reviews {
-		result = append(result, convertReview(product))
+	if len(reviews) == 0 {
+		return nil, nil
 	}
 
-	return result, nil
+	m.cacheDAO.SetProductReviews(ctx, productID, offset, limit, reviews)
+
+	return convertReviews(reviews), nil
 }
 
 func convertReview(review *model.Review) *dto.Review {
@@ -281,4 +300,12 @@ func convertReview(review *model.Review) *dto.Review {
 		Review:    review.Review,
 		Rating:    review.Rating,
 	}
+}
+
+func convertReviews(reviews []*model.Review) []*dto.Review {
+	result := make([]*dto.Review, 0, len(reviews))
+	for _, review := range reviews {
+		result = append(result, convertReview(review))
+	}
+	return result
 }
