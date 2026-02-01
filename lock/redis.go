@@ -2,7 +2,6 @@ package lock
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -16,6 +15,8 @@ var _ Lock = (*RedisLock)(nil)
 const ttl = 10 * time.Second
 const prefix = "products:locks"
 
+const maxRetry = 5
+
 type RedisLock struct {
 	logger *zerolog.Logger
 	client *redis.Client
@@ -27,17 +28,26 @@ func NewRedis(logger *zerolog.Logger, client *redis.Client) *RedisLock {
 
 func (r *RedisLock) Lock(ctx context.Context, id model.ID) error {
 	key := fmt.Sprintf("%s:%d", prefix, id)
-	ok, err := r.client.SetNX(ctx, key, "1", ttl).Result()
-	if err != nil {
-		return fmt.Errorf("lock: %w", err)
-	}
-	if !ok {
-		return errors.New("resource is locked")
+
+	for i := 0; i < maxRetry; i++ {
+		ok, err := r.client.SetNX(ctx, key, "1", ttl).Result()
+		if err != nil {
+			return fmt.Errorf("lock: %w", err)
+		}
+
+		if ok {
+			r.logger.Debug().Str("key", key).Msg("redis lock")
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Duration(i) * time.Second):
+		}
 	}
 
-	r.logger.Debug().Str("key", key).Msg("redis lock")
-
-	return nil
+	return ErrLocked
 }
 
 func (r *RedisLock) Unlock(ctx context.Context, id model.ID) error {

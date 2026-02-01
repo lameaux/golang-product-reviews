@@ -284,7 +284,7 @@ func (m *DAOManager) ListProductReviews(ctx context.Context, productID model.ID,
 	}
 
 	if len(reviews) == 0 {
-		return nil, nil
+		return []*dto.Review{}, nil
 	}
 
 	m.cacheDAO.SetProductReviews(ctx, productID, offset, limit, reviews)
