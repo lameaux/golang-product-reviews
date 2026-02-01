@@ -32,7 +32,7 @@ make
 ### Building with Docker
 
 ```shell
-make build-docker
+make docker-build
 ```
 
 ### Running with Docker Compose
