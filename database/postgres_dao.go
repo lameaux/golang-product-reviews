@@ -51,11 +51,11 @@ func (d *postgresDAO) DeleteProduct(ctx context.Context, id model.ID) error {
 
 		// delete reviews first
 		if err := tx.Where("product_id = ?", id).Delete(&model.Review{}).Error; err != nil {
-			return fmt.Errorf("tx.Delete: %w", err)
+			return fmt.Errorf("tx.Delete review: %w", err)
 		}
 
 		if err := tx.Delete(product).Error; err != nil {
-			return fmt.Errorf("tx.Delete: %w", err)
+			return fmt.Errorf("tx.Delete product: %w", err)
 		}
 
 		return nil
@@ -139,7 +139,7 @@ func (d *postgresDAO) DeleteProductReview(ctx context.Context, reviewID model.ID
 	review := &model.Review{ID: reviewID}
 	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(review).Error; err != nil {
-			return fmt.Errorf("tx.Delete: %w", err)
+			return fmt.Errorf("tx.Delete product: %w", err)
 		}
 
 		return nil

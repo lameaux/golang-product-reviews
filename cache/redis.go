@@ -39,7 +39,7 @@ func (r *RedisCache) InvalidateProduct(ctx context.Context, productID model.ID) 
 		if len(keys) > 0 {
 			if err := r.client.Del(ctx, keys...).Err(); err != nil {
 				r.logger.Warn().Err(err).Str("pattern", pattern).
-					Msg("InvalidateProduct Scan failed")
+					Msg("InvalidateProduct Del failed")
 				return
 			}
 		}
@@ -137,7 +137,7 @@ func (r *RedisCache) GetProductReviews(ctx context.Context, productID model.ID, 
 		return nil, fmt.Errorf("GetProductReviews unmarshal: %w", err)
 	}
 
-	r.logger.Debug().Str(key, key).Msg("GetProductReviews")
+	r.logger.Debug().Str("key", key).Msg("GetProductReviews")
 
 	return reviews, nil
 }
@@ -155,5 +155,5 @@ func (r *RedisCache) SetProductReviews(ctx context.Context, productID model.ID, 
 		return
 	}
 
-	r.logger.Debug().Str(key, key).Msg("SetProductReviews")
+	r.logger.Debug().Str("key", key).Msg("SetProductReviews")
 }
